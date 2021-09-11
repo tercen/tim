@@ -109,25 +109,28 @@ get_serialized_result <- function(df, object, object_name, ctx) {
   pair <- ColumnPair$new()
   pair$lColumns <- list(".object") # column name of the leftTable to use for the join
   pair$rColumns = list(rightTable$columns[[1]]$name) # column name of the rightTable to use for the join (note : namespace has been added)
-  # pair
-  
+
   join.model = JoinOperator$new()
   join.model$rightRelation = rightRelation
   join.model$leftPair = pair
   
-  # create the join relationship using a composite relation (think at a start schema)
+  # create the join relationship using a composite relation (think at a star schema)
   compositeRelation = CompositeRelation$new()
   compositeRelation$id = "compositeRelation"
   compositeRelation$mainRelation = leftRelation
   compositeRelation$joinOperators = list(join.model)
   
-  # finally return a JoinOperator to tercen with the composite relation
+  pair_2 <- ColumnPair$new()
+  pair_2$lColumns <- unname(ctx$cnames)
+  pair_2$rColumns = unname(ctx$cnames) 
+  
   join = JoinOperator$new()
   join$rightRelation = compositeRelation
+  join$leftPair = pair_2
   
   result = OperatorResult$new()
   result$tables = list(leftTable, rightTable)
   result$joinOperators = list(join)
-  
+
   return(result)
 }
