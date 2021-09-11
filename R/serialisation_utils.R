@@ -97,7 +97,7 @@ get_serialized_result <- function(df, object, object_name, ctx) {
   # the factor used in the join relation MUST have a different name then the one used in the leftTable 
   rightTable <- data.frame(
     model = object_name,
-    .base64.serialized.r.model = c(serialize.to.string(object))
+    .base64.serialized.r.model = c(serialize_to_string(object))
   ) %>%
     ctx$addNamespace() %>%
     tercen::dataframe.as.table()
