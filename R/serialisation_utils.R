@@ -134,3 +134,51 @@ get_serialized_result <- function(df, object, object_name, ctx) {
 
   return(result)
 }
+
+#' Retrieve serialized object in tercen
+#'
+#' This function finds a serialised object by factor name.
+#' 
+#' @param ctx Tercen context.
+#' @param factor_name Name of the factor.
+#' @keywords utils
+#' @export
+find_schema_by_factor_name <- function(ctx, factor.name) {
+
+  visit.relation = function(visitor, relation){
+    if (inherits(relation,"SimpleRelation")){
+      visitor(relation)
+    } else if (inherits(relation,"CompositeRelation")){
+      visit.relation(visitor, relation$mainRelation)
+      lapply(relation$joinOperators, function(jop){
+        visit.relation(visitor, jop$rightRelation)
+      })
+    } else if (inherits(relation,"WhereRelation") 
+               || inherits(relation,"RenameRelation") 
+               || inherits(relation,"GatherRelation")){
+      visit.relation(visitor, relation$relation)
+    } else if (inherits(relation,"UnionRelation")){
+      lapply(relation$relations, function(rel){
+        visit.relation(visitor, rel)
+      })
+    } else {
+      stop(paste0("find.schema.by.factor.name unknown relation ", class(relation)))
+    }
+    invisible()
+  }
+  
+  myenv = new.env()
+  add.in.env = function(object){
+    myenv[[toString(length(myenv)+1)]] = object$id
+  }
+  
+  visit.relation(add.in.env, ctx$query$relation)
+  
+  schemas = lapply(as.list(myenv), function(id){
+    ctx$client$tableSchemaService$get(id)
+  })
+  
+  Find(function(schema){
+    !is.null(Find(function(column) column$name == factor.name, schema$columns))
+  }, schemas);
+}
