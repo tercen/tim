@@ -5,7 +5,7 @@
 ### From local repository
 
 ```
-roxygen2::document()
+roxygen2::roxygenise()
 devtools::install()
 ```
 

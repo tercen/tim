@@ -1,14 +1,21 @@
 Package: tim
-Title: Tercen utilities
-Version: 0.0.0.9000
+Title: tim: Tercen Intelligent Modules
+Version: 0.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com")
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+    c(
+      person(
+        given = "Faris", family = "Naji", role = c("aut")
+      ),
+      person(
+        given = "Alexandre", family = "Maurel", role = c("aut")
+      ),
+      person(
+        given = "Alexandre", family = "Gouy", role = c("aut", "cre"), email = "alexandre.gouy@protonmail.com"
+      )
+    )
+Description: This package contains utility functions to facilitate operator 
+    developement in Tercen.
+License: `use_mit_license()`
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
