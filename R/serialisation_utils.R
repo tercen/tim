@@ -7,6 +7,7 @@
 #' @export
 #' @examples
 #' serialize_to_string(iris)
+#' @import base64enc
 serialize_to_string <- function(object) {
   con <- rawConnection(raw(0), "r+")
   saveRDS(object, con)

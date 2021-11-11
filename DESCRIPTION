@@ -16,6 +16,8 @@ Authors@R:
 Description: This package contains utility functions to facilitate operator 
     developement in Tercen.
 License: `use_mit_license()`
+Imports:
+    base64enc
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
