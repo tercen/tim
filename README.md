@@ -12,7 +12,7 @@ devtools::install()
 ### From GitHub
 
 ```
-devtools::install_github("tercen/tim")
+devtools::install_github("tercen/tim", ref="0.0.4")
 ```
 
 ## Usage
