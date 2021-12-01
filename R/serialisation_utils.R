@@ -138,7 +138,7 @@ get_serialized_result <- function(df, object, object_name, ctx) {
 
 #' Retrieve serialized object in tercen
 #'
-#' This function finds a serialised object by factor name.
+#' This function finds the schema containing the factor name.
 #' 
 #' @param ctx Tercen context.
 #' @param factor_name Name of the factor.
