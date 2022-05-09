@@ -34,7 +34,7 @@ matrix_to_flowFrame <- function(data) {
                          "Minimum Parameter Value after Transformation",
                          "Maximum Parameter Value after Transformation")
   )
-  flowFrame <- flowCore::flowFrame(a_matrix, params)
+  flowFrame <- flowCore::flowFrame(data, params)
   
   return(flowFrame)
 }
