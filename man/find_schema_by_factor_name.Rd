@@ -12,6 +12,6 @@ find_schema_by_factor_name(ctx, factor.name)
 \item{factor_name}{Name of the factor.}
 }
 \description{
-This function finds a serialised object by factor name.
+This function finds the schema containing the factor name.
 }
 \keyword{utils}

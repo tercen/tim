@@ -1,7 +1,7 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.4
-Authors@R: 
+Version: 0.0.5
+Authors@R:
     c(
       person(
         given = "Faris", family = "Naji", role = c("aut")
@@ -10,14 +10,18 @@ Authors@R:
         given = "Alexandre", family = "Maurel", role = c("aut")
       ),
       person(
-        given = "Alexandre", family = "Gouy", role = c("aut", "cre"), email = "alexandre.gouy@protonmail.com"
+        given = "Alexandre", family = "Gouy", role = c("aut", "cre"), email = "alexandre.gouy@tercen.com"
       )
     )
 Description: This package contains utility functions to facilitate operator 
     developement in Tercen.
 License: `use_mit_license()`
 Imports:
-    base64enc
+    base64enc,
+    tercen
+Suggests:
+    flowCore,
+    BioBase
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

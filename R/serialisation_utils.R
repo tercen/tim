@@ -183,3 +183,37 @@ find_schema_by_factor_name <- function(ctx, factor.name) {
     !is.null(Find(function(column) column$name == factor.name, schema$columns))
   }, schemas);
 }
+
+
+#' PNG to data frame.
+#'
+#' This function finds the schema containing the factor name.
+#' 
+#' @param png_file_path A vector containing paths to PNG files.
+#' @param filename (optional) A vector containing output file names.
+#' @keywords utils
+#' @export
+png_to_df <- function(png_file_path, filename = NULL) {
+  
+  if(is.null(filename)) filename <- basename(png_file_path)
+  
+  # compute checksum
+  checksum <- as.vector(tools::md5sum(png_file_path))
+  
+  # serialise
+  output_str <- sapply(png_file_path, function(x) {
+    base64enc::base64encode(
+      readBin(x, "raw", file.info(x)[1, "size"]),
+      "txt"
+    )
+  })
+  
+  df <- tibble::tibble(
+    filename = filename,
+    mimetype = "image/png",
+    checksum = checksum,
+    .content = output_str
+  )
+  
+  return(df)
+}
