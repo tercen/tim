@@ -1,6 +1,6 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.7-1
+Version: 0.0.7-2
 Authors@R:
     c(
       person(
@@ -19,6 +19,8 @@ License: `use_mit_license()`
 Imports:
     base64enc,
     tercen
+Remotes:
+    tercen/teRcen@0.12.6
 Suggests:
     BioBase,
     flowCore,
