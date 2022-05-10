@@ -36,7 +36,7 @@ load_data <- function(ctx, documentId, force_load=FALSE){
   isZip <- length(grep(".zip", doc$name)) > 0
   
   if(isZip  && 
-     (!file.exists(file.path(tempFolder, '.extracted')) || force_laod == TRUE) ) {
+     (!file.exists(file.path(tempFolder, '.extracted')) || force_load == TRUE) ) {
     unzip(filename, exdir = tempFolder,
           overwrite = TRUE)
     
