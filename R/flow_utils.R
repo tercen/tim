@@ -7,10 +7,7 @@
 #' @keywords utils
 #' @export
 #' @examples
-#' serialize_to_string(iris)
-#' @importFrom Biobase AnnotatedDataFrame pData varMetadata
-#' @importFrom matrixStats colMins colMaxs
-#' @importFrom flowCore flowFrame
+#' matrix_to_flowFrame(data)
 matrix_to_flowFrame <- function(data) { 
   
   minRange <- matrixStats::colMins(data)

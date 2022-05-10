@@ -1,6 +1,6 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.7
+Version: 0.0.7-1
 Authors@R:
     c(
       person(
@@ -20,8 +20,9 @@ Imports:
     base64enc,
     tercen
 Suggests:
+    BioBase,
     flowCore,
-    BioBase
+    matrixStats
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

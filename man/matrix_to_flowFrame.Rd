@@ -14,6 +14,6 @@ This function allows you to convert a matrix obtained from a tercen context
 into a flowFrame object.
 }
 \examples{
-serialize_to_string(iris)
+matrix_to_flowFrame(data)
 }
 \keyword{utils}
