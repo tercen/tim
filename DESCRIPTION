@@ -1,6 +1,6 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.7-2
+Version: 0.0.7-3
 Authors@R:
     c(
       person(
@@ -20,7 +20,7 @@ Imports:
     base64enc,
     tercen
 Remotes:
-    tercen/teRcen@0.12.6
+    tercen/teRcen@0.12.7
 Suggests:
     BioBase,
     flowCore,
