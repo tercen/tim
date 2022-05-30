@@ -27,6 +27,7 @@
 #' absTol = 0.001,
 #' docIdMapping = c("32d4b2986b98f3ebd5b5baa990000148"="hospitals.csv.zip"))
 #' @import stringr
+#' @importFrom jsonlite toJSON 
 build_test_data <- function( out_table, ctx, test_name, 
                              test_folder = NULL, version = '',
                              absTol=NULL, relTol=NULL, r2=NULL,
@@ -37,7 +38,9 @@ build_test_data <- function( out_table, ctx, test_name,
   
   namespace <- ctx$namespace
   
-  testTbl <- tbl
+  unbox <- tercen:::unbox
+  
+  testTbl <- out_table
   save(testTbl,file= file.path(test_folder, paste0(test_name, '.Rda')) )
   proj_names <- ctx$names
   
@@ -68,8 +71,10 @@ build_test_data <- function( out_table, ctx, test_name,
     }
   }
   
-  if(unname(unlist(ctx$colors)) != ""){
-    select_names <- append(select_names, ".colorLevels")
+  if(length(ctx$colors) > 0) {
+    if(unname(unlist(ctx$colors)) != ""){
+      select_names <- append(select_names, ".colorLevels")
+    }
   }
   
   # if( ".ci" %in% proj_names){select_names <- append(select_names, ".ci")  }
@@ -82,17 +87,15 @@ build_test_data <- function( out_table, ctx, test_name,
   
   
   
-  if(has_y == TRUE){
-    in_tbl <- in_tbl%>% rename("y_values"=".y") 
-  }else{
-    in_tbl <- in_tbl%>% select(-".y")
+  if(has_y == TRUE) {
+    in_tbl <- in_tbl %>% rename("y_values"=".y") 
+  } else {
+    in_tbl <- in_tbl %>% select(-".y")
   }
   
-  if(has_x == TRUE){
-    in_tbl <- in_tbl%>% rename("x_values"=".x") 
+  if(has_x == TRUE) {
+    in_tbl <- in_tbl %>% rename("x_values"=".x") 
   }
-  
-  
   
   has_row_tbl <- FALSE
   has_col_tbl <- FALSE
