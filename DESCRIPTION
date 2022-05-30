@@ -1,6 +1,6 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.11
+Version: 0.0.12
 Authors@R:
     c(
       person(
