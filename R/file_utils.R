@@ -47,10 +47,22 @@ load_data <- function(ctx, documentId, force_load=FALSE){
   
   # If desired file is ZIP archive, get a list, otherwise return the filename
   if( isZip  ){
-    return(list.files(
+    # Handling of the case when there are no subfolders 
+    file_list <- list.files(
       file.path(list.files(tempFolder, full.names = TRUE)), 
       full.names = TRUE, all.files = FALSE,
-      recursive = TRUE))
+      recursive = TRUE)
+    
+    # The line above fails in case there are no sub-folders in the ZIP archive
+    if(length(file_list) == 0){
+      file_list <- list.files(
+        unique(dirname(file.path(list.files(tempFolder, full.names = TRUE))))[[1]], 
+        full.names = TRUE, all.files = FALSE,
+        recursive = TRUE)
+    }
+    
+    
+    return(file_list)
   }else{
     return(filename)
   }
