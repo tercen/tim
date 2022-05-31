@@ -4,7 +4,7 @@
 \alias{populate_gh_workflow}
 \title{Populate GitHub workflows}
 \usage{
-populate_gh_workflow(type, output_path = "./github/workflows")
+populate_gh_workflow(type, output_path = "./.github/workflows")
 }
 \arguments{
 \item{path}{Output path (default).}
