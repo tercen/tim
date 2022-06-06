@@ -12,12 +12,30 @@ devtools::install()
 ### From GitHub
 
 ```
-devtools::install_github("tercen/tim", ref="0.0.4")
+devtools::install_github("tercen/tim", ref="0.0.13")
 ```
 
 ## Usage
 
+### Test utilities
+
+#### Populate test data
+
 ```
-library(tim)
-hello_world()
+tim::build_test_data(out_table = out_table, ctx = ctx, test_name = "test1")
+```
+
+#### Check test data
+
+```
+tim::check_test_local(out_table = out_table, test_name = "test1")
+```
+
+### Operator folder utilities
+
+#### Populate GitHub workflow files
+
+```
+tim::populate_gh_workflow(type = "R")
+tim::populate_gh_workflow(type = "docker")
 ```
