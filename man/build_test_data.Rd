@@ -13,7 +13,8 @@ build_test_data(
   absTol = NULL,
   relTol = NULL,
   r2 = NULL,
-  docIdMapping = c()
+  docIdMapping = c(),
+  props = c()
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ build_test_data(
 \item{r2}{Squared correlation parameter.}
 
 \item{docIdMapping}{mapping between document Id and filename used for testing.}
+
+\item{props}{Array containing properties to be set for specific stepIds.}
 }
 \description{
 Based on the output table and input projection from an operator, builds
