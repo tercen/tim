@@ -5,7 +5,7 @@
 \title{Create unit tests based on a workflow step for an operator}
 \usage{
 build_test_data(
-  out_table,
+  res_table,
   ctx,
   test_name,
   test_folder = NULL,
@@ -18,8 +18,6 @@ build_test_data(
 )
 }
 \arguments{
-\item{out_table}{operator output table with namespace}
-
 \item{ctx}{Tercen context.}
 
 \item{test_name}{Name identifying the test.}
@@ -37,6 +35,8 @@ build_test_data(
 \item{docIdMapping}{mapping between document Id and filename used for testing.}
 
 \item{props}{Array containing properties to be set for specific stepIds.}
+
+\item{out_table}{operator output table with namespace}
 }
 \description{
 Based on the output table and input projection from an operator, builds
