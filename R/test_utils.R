@@ -582,9 +582,7 @@ run_local_test <- function( res_table, ctx, test_name,
                   msg_fail=paste0("Comparison failed for table ", i, ", column ", colnames[[j]], "."))
         }
       }
-      
     }
-    
   }
   print("Test completed succesfully")
 }
