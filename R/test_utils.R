@@ -634,7 +634,14 @@ assert <- function( x, y,
 }
 
 
-
+#' Utility function to extract the step name given an workflow and step IDs
+#'
+#' 
+#' @param ctx Tercen context.
+#' @param wkfId Workflow Identifier
+#' @param stepId Step Identifier
+#' @keywords test
+#' @export
 get_step_name <- function(ctx, wkfId, stepId){
   wkf <- ctx$client$workflowService$get(wkfId)
   steps <- wkf$steps
