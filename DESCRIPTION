@@ -20,7 +20,7 @@ Imports:
     base64enc,
     tercen
 Remotes:
-    tercen/teRcen@0.12.8
+    tercen/teRcen@0.12.7
 Suggests:
     BioBase,
     flowCore,
