@@ -17,6 +17,16 @@ devtools::install_github("tercen/tim", ref="0.0.13")
 
 ## Usage
 
+### Developement workflow utilities
+
+```
+tim::set_workflow_step_ids(data_step_url)
+```
+
+```
+tim::set_tercen_credentials()
+```
+
 ### Test utilities
 
 #### Populate test data
