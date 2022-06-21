@@ -26,6 +26,7 @@
 #' docIdMapping = c("32d4b2986b98f3ebd5b5baa990000148"="hospitals.csv.zip"))
 #' @import stringr
 #' @import tercen
+#' @import jsonlite
 build_test_data <- function( res_table, ctx, test_name, 
                                    test_folder = NULL, version = '',
                                    absTol=NULL, relTol=NULL, r2=NULL,
@@ -492,6 +493,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' 
 #' @import stringr
 #' @import tercen
+#' @import jsonlite
 run_local_test <- function( res_table, ctx, test_name, 
                             test_folder = NULL, 
                             absTol=NULL, relTol=NULL, r2=NULL,
@@ -553,7 +555,7 @@ run_local_test <- function( res_table, ctx, test_name,
             nrow(svd_tbl), metric="eq",
             msg_fail=paste0("Number of rows for table ", i, " do not match."))
     
-    for( j in colnames){
+    for( j in seq(1, length(colnames))){
       x <- out_tbl[[j]]
       y <- svd_tbl[[j]]
       assert( class(x[[1]]),
