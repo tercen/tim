@@ -444,9 +444,12 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
                    "labels"=if(is.null(labels) ) list() else unbox_labels,
                    "yAxis"=unbox(yAxis),
                    "xAxis"=unbox(xAxis),
-                   "propertyValues"=propVals,
                    "generatedOn"=unbox(format(Sys.time(), "%x %X %Y")),
                    "version"=unbox(version))
+  
+  if( length(propVals) >0 ){
+    json_data <- c(json_data, "propertyValues"=propVals)
+  }  
   
   if( length(docIdMapping) > 0 ){
     fileUris <- unname((docIdMapping))
