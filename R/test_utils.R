@@ -555,7 +555,7 @@ run_local_test <- function( res_table, ctx, test_name,
             nrow(svd_tbl), metric="eq",
             msg_fail=paste0("Number of rows for table ", i, " do not match."))
     
-    for( j in colnames){
+    for( j in seq(1, length(colnames))){
       x <- out_tbl[[j]]
       y <- svd_tbl[[j]]
       assert( class(x[[1]]),
