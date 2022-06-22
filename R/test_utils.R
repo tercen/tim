@@ -702,6 +702,33 @@ env_to_df <- function(env){
 }
 
 
+build_table_schema <- function(  tbl, tbl_file ){
+  colnames <- names(tbl)
+  
+  
+  table_schema <- c()
+  
+  for( i in seq(1, length(colnames))) {
+    
+    entry <- list("kind"=unbox("ColumnSchema"),
+                  "name"=unbox(colnames[[i]]),
+                  "type"=unbox(get_column_type(class(tbl[[colnames[[i]]]]))) )
+    
+    table_schema <- append( table_schema, list(entry) )
+    
+  }
+  
+  json_data <- list("kind"=unbox("TableSchema"),
+                    "columns"=table_schema)
+  
+  
+  
+  json_data <- toJSON(json_data, pretty=TRUE, auto_unbox = FALSE,
+                      digits=16)
+  
+  write(json_data, str_replace(tbl_file, ".csv", ".csv.schema") )
+}
+
 get_column_type <- function(coltype){
   schematype <- NULL
   schematype <- switch(coltype,
