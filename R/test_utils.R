@@ -700,3 +700,14 @@ env_to_df <- function(env){
   
   return(dff)
 }
+
+
+get_column_type <- function(coltype){
+  schematype <- NULL
+  schematype <- switch(coltype,
+                       "character"="string",
+                       "numeric"="double",
+                       "integer"="int32")
+  
+  return(schematype)
+}
