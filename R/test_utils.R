@@ -204,6 +204,10 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
   tidx <- 1
   out_tbl_files <- append( out_tbl_files, 
                            unbox(paste0(test_name, '_out_', tidx, '.csv') ))
+  
+  build_table_schema(as.data.frame(res_table),
+                     file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+  
   write.csv(res_table,
             file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
             row.names = FALSE)
@@ -223,6 +227,8 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
       }
     }
     
+    build_table_schema(out_ctbl %>% select(-".ci"),
+                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     
     write.csv(out_ctbl %>% select(-".ci"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
@@ -244,6 +250,9 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
       }
     }
     
+    
+    build_table_schema(out_rtbl %>% select(-".ri"),
+                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     
     write.csv(out_rtbl %>% select(-".ri"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
@@ -277,6 +286,10 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv') ))
+    
+    build_table_schema(as.data.frame(res_table),
+                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+    
     write.csv(res_table,
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
               row.names = FALSE)
@@ -296,6 +309,10 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
             mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
         }
       }
+      
+      build_table_schema(out_ctbl %>% select(-".ci"),
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+      
       write.csv(out_ctbl %>% select(-".ci"),
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
                 row.names = FALSE)
@@ -314,6 +331,9 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
             mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
         }
       }
+      
+      build_table_schema(out_rtbl %>% select(-".ri"),
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
       
       write.csv(out_rtbl %>% select(-".ri"),
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
@@ -382,9 +402,15 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
   for( k in seq(1, length(out_tbls))){
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', k ,'.csv') ))
+    
+    
     write.csv(as.data.frame(out_tbls[[k]]),
               file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ) ,
               row.names = FALSE)
+    
+    build_table_schema(as.data.frame(out_tbls[[k]]),
+                       file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
+    
   }
   
   return(out_tbl_files)
