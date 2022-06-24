@@ -132,7 +132,7 @@ create_input_projection <- function( ctx, docIdMapping ){
   has_lbl_tbl <- FALSE
   
   # .all -> Empty row or column projection table
-  if( length(names(in_rtbl)) > 0 || names(in_rtbl) != ".all" ){
+  if( length(names(in_rtbl)) > 0 && names(in_rtbl) != ".all" ){
     in_rtbl <- in_rtbl %>% 
       mutate( .ri=seq(0,nrow(.)-1) )
     
@@ -144,7 +144,7 @@ create_input_projection <- function( ctx, docIdMapping ){
     in_tbl <- select(in_tbl, -".ri")
   }
   
-  if( length(names(in_ctbl)) > 1 || names(in_ctbl) != ".all" ){
+  if( length(names(in_ctbl)) > 0 && names(in_ctbl) != ".all" ){
     in_ctbl <- in_ctbl %>% mutate( .ci=seq(0,nrow(.)-1) )
     in_tbl <- dplyr::full_join( in_tbl, in_ctbl, by=".ci" ) %>%
       select(-".ci")
@@ -474,7 +474,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
                    "version"=unbox(version))
   
   if( length(propVals) >0 ){
-    json_data <- c(json_data, "propertyValues"=propVals)
+    json_data <- c(json_data, "propertyValues"=list(propVals))
   }  
   
   if( length(docIdMapping) > 0 ){
