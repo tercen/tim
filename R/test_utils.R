@@ -470,6 +470,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
 build_test_input <- function( in_proj, out_tbl_files, ctx, test_name, 
                               test_folder = NULL, version = '',
                               absTol=NULL, relTol=NULL, r2=NULL,
+                              skipCols=c(),
                               docIdMapping=c(),
                               props=c()){
   
