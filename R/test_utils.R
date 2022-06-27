@@ -531,7 +531,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
   if( length(skipCols) > 0 ){
     # Get the column names from the saved files to get, if any, the namespace
     # This is easier than parsing again the resulting tables
-    skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, out_tbl_files, test_folder)
+    skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, skipCols, out_tbl_files, test_folder)
     
     json_data <- c(json_data, "skipColumns"=list(skipColsWithNamespace))
   }
@@ -635,7 +635,7 @@ run_local_test <- function( res_table, ctx, test_name,
           length(saved_tbls), metric="eq",
           msg_fail="Number of resulting tables differ.")
   
-  skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, out_tbl_files, test_folder)
+  skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, skipCols, out_tbl_files, test_folder)
   for( i in seq(1, length(out_tbl_files))){
     out_tbl <- res_table_list[[i]]
     svd_tbl <- saved_tbls[[i]]
@@ -806,7 +806,7 @@ get_column_type <- function(coltype){
 }
 
 
-get_skip_cols_with_namespace <- function(ctx, tbl_files, test_folder){
+get_skip_cols_with_namespace <- function(ctx, skipCols, tbl_files, test_folder){
   col_names <- c()
   for( tbl_file in tbl_files ){
     tbl<-read.csv( file.path(test_folder, tbl_file) )
