@@ -12,6 +12,7 @@ run_local_test(
   absTol = NULL,
   relTol = NULL,
   r2 = NULL,
+  skipCols = c(),
   docIdMapping = c()
 )
 }
@@ -27,6 +28,8 @@ run_local_test(
 \item{relTol}{Relative tolerance parameter.}
 
 \item{r2}{Squared correlation parameter.}
+
+\item{skipCols}{Column names to be skipped during testing}
 }
 \description{
 Base don a test name, compares a computed table agianst a previously saved one.

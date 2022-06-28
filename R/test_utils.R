@@ -11,6 +11,8 @@
 #' @param absTol Absolute tolerance parameter.
 #' @param relTol Relative tolerance parameter.
 #' @param r2 Squared correlation parameter.
+#' @param gen_schema Should schema files for output tabls be generated [default: FALSE]
+#' @param skipCols Column names (without namespace) to be skipped during comparisons.
 #' @param docIdMapping mapping between document Id and filename used for testing.
 #' @param props Array containing properties to be set for specific stepIds.
 #' @keywords test
@@ -30,6 +32,8 @@
 build_test_data <- function( res_table, ctx, test_name, 
                                    test_folder = NULL, version = '',
                                    absTol=NULL, relTol=NULL, r2=NULL,
+                                   gen_schema=FALSE,
+                                   skipCols=c(),
                                    docIdMapping=c(),
                                    props=c()){
   if( is.null(test_folder)){
@@ -43,22 +47,26 @@ build_test_data <- function( res_table, ctx, test_name,
   if( class(res_table)[[1]] == "JoinOperator"){
     out_tbl_files <- build_test_data_for_schema( in_proj, res_table, ctx, test_name, 
                                                  test_folder = test_folder, 
+                                                 gen_schema=gen_schema,
                                                  docIdMapping=docIdMapping)
     
   }else if( class(res_table)[[1]] == "list"){
     out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
                                                test_folder = test_folder, 
+                                               gen_schema=gen_schema,
                                                docIdMapping=docIdMapping)  
     
   }else{
     out_tbl_files <- build_test_for_table(in_proj, res_table, ctx, test_name, 
                                           test_folder = test_folder, 
+                                          gen_schema=gen_schema,
                                           docIdMapping=docIdMapping)  
   }
   
   build_test_input( in_proj, out_tbl_files, ctx, test_name, 
                     test_folder = test_folder, version = version,
                     absTol=absTol, relTol=relTol, r2=r2,
+                    skipCols=skipCols,
                     docIdMapping=docIdMapping,
                     props=props)
   
@@ -187,10 +195,9 @@ create_input_projection <- function( ctx, docIdMapping ){
 }
 
 build_test_for_table <- function( in_proj, res_table, ctx, test_name, 
-                                  test_folder = NULL, version = '',
-                                  absTol=NULL, relTol=NULL, r2=NULL,
-                                  docIdMapping=c(),
-                                  props=c()
+                                  test_folder = NULL, 
+                                  gen_schema=FALSE,
+                                  docIdMapping=c()
 ){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
@@ -205,15 +212,16 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
   out_tbl_files <- append( out_tbl_files, 
                            unbox(paste0(test_name, '_out_', tidx, '.csv') ))
   
-  build_table_schema(as.data.frame(res_table),
-                     file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+  if(gen_schema==TRUE){
+    build_table_schema(as.data.frame(res_table),
+                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+  }
   
-  write.csv(res_table,
-            file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
-            row.names = FALSE)
+  
   
   tidx <- tidx + 1
   
+  #res_table
   
   if(has_col_tbl == TRUE){
     out_tbl_files <- append( out_tbl_files, 
@@ -227,14 +235,21 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
       }
     }
     
-    build_table_schema(out_ctbl %>% select(-".ci"),
-                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+    if(gen_schema==TRUE){
+      build_table_schema(out_ctbl %>% select(-".ci"),
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+    }
     
     write.csv(out_ctbl %>% select(-".ci"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
               row.names = FALSE)
     
     tidx <- tidx + 1
+  }else{
+    
+    if( ".ci" %in% names(res_table) ){
+      res_table <- select(res_table, -".ci")
+    }
   }
   
   if(has_row_tbl == TRUE){
@@ -250,25 +265,35 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
       }
     }
     
-    
-    build_table_schema(out_rtbl %>% select(-".ri"),
-                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+    if(gen_schema==TRUE){
+      build_table_schema(out_rtbl %>% select(-".ri"),
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+    }
     
     write.csv(out_rtbl %>% select(-".ri"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
               row.names = FALSE)
     
+  }else{
+    
+    if( ".ri" %in% names(res_table) ){
+      res_table <- select(res_table, -".ri")
+    }
   }
+  
+  
+  write.csv(res_table,
+            file.path(test_folder, paste0(test_name, '_out_', 1, '.csv') ) ,
+            row.names = FALSE)
   
   return(out_tbl_files)
 }
 
 
 build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name, 
-                                       test_folder = NULL, version = '',
-                                       absTol=NULL, relTol=NULL, r2=NULL,
-                                       docIdMapping=c(),
-                                       props=c()
+                                       test_folder = NULL, 
+                                       gen_schema=FALSE,
+                                       docIdMapping=c()
 ){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
@@ -284,15 +309,19 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
   for( i in seq(1, length(res_table_list))){
     res_table <- res_table_list[[i]]
     
+    
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv') ))
     
-    build_table_schema(as.data.frame(res_table),
-                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+    if(gen_schema==TRUE){
+      build_table_schema(as.data.frame(res_table),
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+    }
     
-    write.csv(res_table,
-              file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
-              row.names = FALSE)
+    
+    # Keep index to save main table later after checking for column and row tables
+    tidx_prev <- tidx
+    
     tidx <- tidx + 1
     
     has_ci <- any(unlist(lapply( names(res_table), function(x) { x == '.ci' } ) ))
@@ -310,13 +339,20 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
         }
       }
       
-      build_table_schema(out_ctbl %>% select(-".ci"),
-                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+      if(gen_schema==TRUE){
+        build_table_schema(out_ctbl %>% select(-".ci"),
+                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+      }
       
       write.csv(out_ctbl %>% select(-".ci"),
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
                 row.names = FALSE)
       tidx <- tidx + 1
+    }else{
+      
+      if( ".ci" %in% names(res_table) ){
+        res_table <- select(res_table, -".ci")
+      }
     }
     
     if(has_ri == TRUE){
@@ -332,14 +368,25 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
         }
       }
       
-      build_table_schema(out_rtbl %>% select(-".ri"),
-                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+      if(gen_schema==TRUE){
+        build_table_schema(out_rtbl %>% select(-".ri"),
+                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+      }
       
       write.csv(out_rtbl %>% select(-".ri"),
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
                 row.names = FALSE)
       tidx <- tidx + 1
+    }else{
+      
+      if( ".ri" %in% names(res_table) ){
+        res_table <- select(res_table, -".ri")
+      }
     }
+    
+    write.csv(res_table,
+              file.path(test_folder, paste0(test_name, '_out_', tidx_prev, '.csv') ) ,
+              row.names = FALSE)
   }
   
   
@@ -349,6 +396,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
 
 build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name, 
                                         test_folder = NULL,
+                                        gen_schema=FALSE,
                                         docIdMapping=c() ){
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
@@ -369,6 +417,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
   for( k in seq(1, length(jo))){
     jo_rr <- jo[[k]]$rightRelation
     
+    
     if( is.null(jo_rr$mainRelation)){
       
       out_tbls <- append( out_tbls, 
@@ -382,6 +431,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
       jo_rel <- jo_rr$joinOperators
       
       for( r in seq(1,length(jo_rel))){
+        
         if( r == 1){
           
           sch <- as.data.frame(ctx$selectSchema( jo_rel[[r]]$rightRelation )   )
@@ -403,13 +453,13 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', k ,'.csv') ))
     
-    
     write.csv(as.data.frame(out_tbls[[k]]),
               file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ) ,
               row.names = FALSE)
-    
-    build_table_schema(as.data.frame(out_tbls[[k]]),
-                       file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
+    if(gen_schema==TRUE){
+      build_table_schema(as.data.frame(out_tbls[[k]]),
+                         file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
+    }
     
   }
   
@@ -420,6 +470,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
 build_test_input <- function( in_proj, out_tbl_files, ctx, test_name, 
                               test_folder = NULL, version = '',
                               absTol=NULL, relTol=NULL, r2=NULL,
+                              skipCols=c(),
                               docIdMapping=c(),
                               props=c()){
   
@@ -477,6 +528,15 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
     json_data <- c(json_data, "propertyValues"=list(propVals))
   }  
   
+  if( length(skipCols) > 0 ){
+    # Get the column names from the saved files to get, if any, the namespace
+    # This is easier than parsing again the resulting tables
+    skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, skipCols, out_tbl_files, test_folder)
+    
+    json_data <- c(json_data, "skipColumns"=list(skipColsWithNamespace))
+  }
+  
+  
   if( length(docIdMapping) > 0 ){
     fileUris <- unname((docIdMapping))
     json_data <- c(json_data, "inputFileUris"=list(fileUris))
@@ -515,6 +575,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' @param absTol Absolute tolerance parameter.
 #' @param relTol Relative tolerance parameter.
 #' @param r2 Squared correlation parameter.
+#' @param skipCols Column names to be skipped during testing
 #' @keywords test
 #' @export
 #' @examples
@@ -526,6 +587,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 run_local_test <- function( res_table, ctx, test_name, 
                             test_folder = NULL, 
                             absTol=NULL, relTol=NULL, r2=NULL,
+                            skipCols=c(),
                             docIdMapping=c()){
   
   if( is.null(test_folder)){
@@ -573,7 +635,7 @@ run_local_test <- function( res_table, ctx, test_name,
           length(saved_tbls), metric="eq",
           msg_fail="Number of resulting tables differ.")
   
-  
+  skipColsWithNamespace <- get_skip_cols_with_namespace(ctx, skipCols, out_tbl_files, test_folder)
   for( i in seq(1, length(out_tbl_files))){
     out_tbl <- res_table_list[[i]]
     svd_tbl <- saved_tbls[[i]]
@@ -585,6 +647,10 @@ run_local_test <- function( res_table, ctx, test_name,
             msg_fail=paste0("Number of rows for table ", i, " do not match."))
     
     for( j in seq(1, length(colnames))){
+      if( colnames[[j]] %in% skipColsWithNamespace ){
+        next
+      }
+      
       x <- out_tbl[[j]]
       y <- svd_tbl[[j]]
       assert( class(x[[1]]),
@@ -737,4 +803,40 @@ get_column_type <- function(coltype){
                        "integer"="int32")
   
   return(schematype)
+}
+
+
+get_skip_cols_with_namespace <- function(ctx, skipCols, tbl_files, test_folder){
+  col_names <- c()
+  for( tbl_file in tbl_files ){
+    tbl<-read.csv( file.path(test_folder, tbl_file) )
+    col_names <- append(col_names, unlist(names(tbl))  )
+  }
+  
+  # Remove namespace, but keep input column and row projection names
+  in_names <- unname(unlist(c(names(ctx$rnames), names(ctx$cnames))))
+  
+  # Convert white space in names to . (which is how tercen control handles this situation in csv files)
+  in_names <- unlist(lapply(in_names, function(x){
+    str_replace_all(x, " ", "\\.")
+  }))
+  
+  col_names_nn <- unlist(lapply( col_names, function(x){
+    if( (x %in% in_names) == TRUE || 
+        stri_startswith(x,fixed = ".") || 
+        grepl(".", x, fixed=TRUE) == FALSE){
+      return(x)
+    }else{
+      return(str_split_fixed(x, "\\.", 2)[[2]])
+    }
+  }))
+  
+  
+  skipColsWithNamespace<-unlist(lapply(skipCols, function(x){
+    col <- grepl( x, col_names_nn, fixed= TRUE)
+    
+    unique(col_names[ which(col) ])
+  }))
+  
+  return(skipColsWithNamespace)
 }

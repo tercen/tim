@@ -13,6 +13,8 @@ build_test_data(
   absTol = NULL,
   relTol = NULL,
   r2 = NULL,
+  gen_schema = FALSE,
+  skipCols = c(),
   docIdMapping = c(),
   props = c()
 )
@@ -31,6 +33,10 @@ build_test_data(
 \item{relTol}{Relative tolerance parameter.}
 
 \item{r2}{Squared correlation parameter.}
+
+\item{gen_schema}{Should schema files for output tabls be generated \link{default: FALSE}}
+
+\item{skipCols}{Column names (without namespace) to be skipped during comparisons.}
 
 \item{docIdMapping}{mapping between document Id and filename used for testing.}
 
