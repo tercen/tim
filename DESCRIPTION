@@ -18,7 +18,10 @@ Description: This package contains utility functions to facilitate operator
 License: `use_mit_license()`
 Imports:
     base64enc,
-    tercen
+    tercen,
+    jsonlite,
+    stringr,
+    stringi
 Remotes:
     tercen/teRcen@0.12.7
 Suggests:
