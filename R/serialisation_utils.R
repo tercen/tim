@@ -2,18 +2,24 @@
 #'
 #' This function allows you to serialize an object to a string.
 #' 
-#' @param object Object to be serialized.
+#' @param object Object (or list of objects) to be serialized.
 #' @keywords utils
 #' @export
 #' @examples
 #' serialize_to_string(iris)
 #' @import base64enc
 serialize_to_string <- function(object) {
-  con <- rawConnection(raw(0), "r+")
-  saveRDS(object, con)
-  str64 <- base64enc::base64encode(rawConnectionValue(con))
-  close(con)
-  return(str64)
+  if(!inherits(object, "list")) object <- list(object)
+  
+  str64_list <- sapply(object, function(x) {
+    con <- rawConnection(raw(0), "r+")
+    saveRDS(x, con)
+    str64 <- base64enc::base64encode(rawConnectionValue(con))
+    close(con)
+    str64
+  })
+  
+  return((str64_list))
 }
 
 
@@ -21,7 +27,7 @@ serialize_to_string <- function(object) {
 #'
 #' This function allows you to serialise an object to a string.
 #' 
-#' @param object Object to be serialised.
+#' @param object Object (or list of objects) to be serialised.
 #' @keywords utils
 #' @export
 #' @examples
@@ -42,10 +48,17 @@ serialise_to_string <- function(object) {
 #' str <- serialize_to_string(iris)
 #' iris2 <- deserialize_from_string(str)
 deserialize_from_string <- function(str64) {
-  con <- rawConnection(base64enc::base64decode(str64), "r+")
-  object <- readRDS(con)
-  close(con)
-  return(object)
+  if(!inherits(str64, "list")) str64 <- as.list(str64)
+  
+  object_list <- lapply(str64, function(x) {
+    con <- rawConnection(base64enc::base64decode(x), "r+")
+    object <- readRDS(con)
+    close(con)
+    object
+  })
+  if(length(object_list) == 1) object_list <- object_list[[1]]
+  
+  return(object_list)
 }
 
 
