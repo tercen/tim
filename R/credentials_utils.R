@@ -28,7 +28,7 @@ set_workflow_step_ids <- function(step_url, set_credentials = TRUE, serviceUri =
   if(parsed_url$hostname == "tercen.com") {
     options("tercen.serviceUri"= "https://tercen.com/api/v1/")
   } else if(is.null(serviceUri)) {
-    stop("Please specify serviceUri")
+    options("tercen.serviceUri"= paste0("https://", parsed_url$hostname, "/api/v1/"))
   } else {
     options("tercen.serviceUri"= serviceUri)
   }
