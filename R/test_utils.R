@@ -125,12 +125,12 @@ create_input_projection <- function( ctx, docIdMapping ){
   
   if(has_y == TRUE){
     in_tbl <- in_tbl %>%
-      rename("y_values"=".y") 
+      dplyr::rename("y_values"=".y") 
   }
   
   if(has_x == TRUE){
     in_tbl <- in_tbl %>%
-      rename("x_values"=".x") 
+      dplyr::rename("x_values"=".x") 
   }
   
   has_row_tbl <- FALSE
