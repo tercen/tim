@@ -219,10 +219,10 @@ plot_file_to_df <- function(file_path, filename = NULL) {
   )
   
   # compute checksum
-  checksum <- as.vector(tools::md5sum(png_file_path))
+  checksum <- as.vector(tools::md5sum(file_path))
   
   # serialise
-  output_str <- sapply(png_file_path, function(x) {
+  output_str <- sapply(file_path, function(x) {
     base64enc::base64encode(
       readBin(x, "raw", file.info(x)[1, "size"]),
       "txt"
