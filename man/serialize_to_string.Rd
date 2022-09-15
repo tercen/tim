@@ -7,7 +7,7 @@
 serialize_to_string(object)
 }
 \arguments{
-\item{object}{Object to be serialized.}
+\item{object}{Object (or list of objects) to be serialized.}
 }
 \description{
 This function allows you to serialize an object to a string.
