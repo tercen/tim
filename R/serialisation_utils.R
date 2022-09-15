@@ -198,17 +198,25 @@ find_schema_by_factor_name <- function(ctx, factor.name) {
 }
 
 
-#' PNG to data frame.
+#' Plot file (PNG, SVG, PDF) to data frame.
 #'
 #' This function finds the schema containing the factor name.
 #' 
-#' @param png_file_path A vector containing paths to PNG files.
+#' @param file_path A vector containing paths to PNG files.
 #' @param filename (optional) A vector containing output file names.
 #' @keywords utils
 #' @export
-png_to_df <- function(png_file_path, filename = NULL) {
+plot_file_to_df <- function(file_path, filename = NULL) {
   
-  if(is.null(filename)) filename <- basename(png_file_path)
+  if(is.null(filename)) filename <- basename(file_path)
+  
+  type <- tools::file_ext(filename)
+  mimetype <- switch (type,
+    png = "image/png",
+    svg = "image/svg",
+    pdf = "application/pdf",
+    "unknown"
+  )
   
   # compute checksum
   checksum <- as.vector(tools::md5sum(png_file_path))
@@ -223,10 +231,22 @@ png_to_df <- function(png_file_path, filename = NULL) {
   
   df <- tibble::tibble(
     filename = filename,
-    mimetype = "image/png",
+    mimetype = mimetype,
     checksum = checksum,
     .content = output_str
   )
   
   return(df)
+}
+
+#' Save plot as a temporary file.
+#'
+#' @param plt ggplot object.
+#' @param type any of png, pdf, svg.
+#' @keywords utils
+#' @export
+save_plot <- function(plt, type = "png", ...) {
+  tmp <- tempfile(fileext = paste0(".", type))
+  ggplot2::ggsave(tmp, plot = plt, ...)
+  return(tmp)
 }

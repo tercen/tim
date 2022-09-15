@@ -1,6 +1,6 @@
 Package: tim
 Title: tim: Tercen Intelligent Modules
-Version: 0.0.15
+Version: 0.0.16
 Authors@R:
     c(
       person(
@@ -22,12 +22,11 @@ Imports:
     jsonlite,
     stringr,
     stringi
-Remotes:
-    tercen/teRcen@0.12.7
 Suggests:
     BioBase,
     flowCore,
-    matrixStats
+    matrixStats,
+    ggplot2
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
