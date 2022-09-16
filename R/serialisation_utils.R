@@ -213,7 +213,7 @@ plot_file_to_df <- function(file_path, filename = NULL) {
   type <- tools::file_ext(filename)
   mimetype <- switch (type,
     png = "image/png",
-    svg = "image/svg",
+    svg = "image/svg+xml",
     pdf = "application/pdf",
     "unknown"
   )
