@@ -318,7 +318,7 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
     out_rtbl <- in_rtbl
 
     if(gen_schema==TRUE){
-      build_table_schema_local(out_rtbl %>% select(-".ri"),
+      build_table_schema(out_rtbl %>% select(-".ri"),
                                file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
@@ -640,7 +640,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' @keywords test
 #' @export
 #' @examples
-#' check_test_local(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
+#' run_local_test(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
 #' 
 #' @import stringr
 #' @import tercen
@@ -671,7 +671,7 @@ run_local_test <- function( res_table, ctx, test_name,
   
   print(paste0("Running local test against ", test_name))
   
-  in_proj <- create_input_projection_local(ctx)
+  in_proj <- create_input_projection(ctx)
   
   
   # Check if operator output is a table, list of tables or relation
@@ -683,7 +683,7 @@ run_local_test <- function( res_table, ctx, test_name,
                                                        forcejoinrow = forcejoinrow)
     
   }else if( class(res_table)[[1]] == "list"){
-    out_tbl_files <- build_test_for_table_local_list(in_proj, res_table, ctx, test_name, 
+    out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
                                                            test_folder = tmp_folder, 
                                                            forcejoincol = forcejoincol,
                                                            forcejoinrow = forcejoinrow)  

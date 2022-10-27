@@ -40,7 +40,7 @@ run_local_test(
 Based on a test name, compares a computed table against a previously saved one.
 }
 \examples{
-check_test_local(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
+run_local_test(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
 
 }
 \keyword{test}
