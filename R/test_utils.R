@@ -28,6 +28,7 @@
 #' absTol = 0.001,
 #' forcejoincol = c(TRUE, FALSE))
 #' @import stringr
+#' @import stringi
 #' @import tercen
 #' @import jsonlite
 build_test_data <- function( res_table, ctx, test_name, 
@@ -643,6 +644,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' run_local_test(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
 #' 
 #' @import stringr
+#' @import stringi
 #' @import tercen
 #' @import jsonlite
 run_local_test <- function( res_table, ctx, test_name, 
