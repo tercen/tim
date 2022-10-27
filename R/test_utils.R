@@ -671,7 +671,7 @@ run_local_test <- function( res_table, ctx, test_name,
   
   print(paste0("Running local test against ", test_name))
   
-  in_proj <- create_input_projection(ctx)
+  in_proj <- create_input_projection(ctx, test_folder)
   
   
   # Check if operator output is a table, list of tables or relation
