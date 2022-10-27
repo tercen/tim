@@ -15,8 +15,9 @@ build_test_data(
   r2 = NULL,
   gen_schema = FALSE,
   skipCols = c(),
-  docIdMapping = c(),
-  props = c()
+  props = c(),
+  forcejoincol = NULL,
+  forcejoinrow = NULL
 )
 }
 \arguments{
@@ -38,9 +39,11 @@ build_test_data(
 
 \item{skipCols}{Column names (without namespace) to be skipped during comparisons.}
 
-\item{docIdMapping}{mapping between document Id and filename used for testing.}
-
 \item{props}{Array containing properties to be set for specific stepIds.}
+
+\item{forcejoincol}{Logical array matching num. of out_table to force relation to column (when join was not made through .ci).}
+
+\item{forcejoinrow}{Logical array matching num. of out_table to force relation to row (when join was not made through .ri).}
 
 \item{out_table}{operator output table with namespace}
 }
@@ -56,6 +59,6 @@ absTol = 0.001)
 build_test_data( tbl, ctx, paste0(step_name, "_absTol"),
 version = '0.0.1',
 absTol = 0.001,
-docIdMapping = c("32d4b2986b98f3ebd5b5baa990000148"="hospitals.csv.zip"))
+forcejoincol = c(TRUE, FALSE))
 }
 \keyword{test}

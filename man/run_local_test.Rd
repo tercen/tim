@@ -13,7 +13,8 @@ run_local_test(
   relTol = NULL,
   r2 = NULL,
   skipCols = c(),
-  docIdMapping = c()
+  forcejoincol = NULL,
+  forcejoinrow = NULL
 )
 }
 \arguments{
@@ -30,9 +31,13 @@ run_local_test(
 \item{r2}{Squared correlation parameter.}
 
 \item{skipCols}{Column names to be skipped during testing}
+
+\item{forcejoincol}{Logical array matching num. of out_table to force relation to column (when join was not made through .ci).}
+
+\item{forcejoinrow}{Logical array matching num. of out_table to force relation to row (when join was not made through .ri).}
 }
 \description{
-Base don a test name, compares a computed table agianst a previously saved one.
+Based on a test name, compares a computed table against a previously saved one.
 }
 \examples{
 check_test_local(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
