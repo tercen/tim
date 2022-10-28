@@ -13,8 +13,9 @@
 #' @param r2 Squared correlation parameter.
 #' @param gen_schema Should schema files for output tabls be generated [default: FALSE]
 #' @param skipCols Column names (without namespace) to be skipped during comparisons.
-#' @param docIdMapping mapping between document Id and filename used for testing.
 #' @param props Array containing properties to be set for specific stepIds.
+#' @param forcejoincol Logical array matching num. of out_table to force relation to column (when join was not made through .ci).
+#' @param forcejoinrow Logical array matching num. of out_table to force relation to row (when join was not made through .ri).
 #' @keywords test
 #' @export
 #' @examples
@@ -25,22 +26,35 @@
 #' build_test_data( tbl, ctx, paste0(step_name, "_absTol"),
 #' version = '0.0.1',
 #' absTol = 0.001,
-#' docIdMapping = c("32d4b2986b98f3ebd5b5baa990000148"="hospitals.csv.zip"))
+#' forcejoincol = c(TRUE, FALSE))
 #' @import stringr
+#' @import stringi
 #' @import tercen
 #' @import jsonlite
 build_test_data <- function( res_table, ctx, test_name, 
-                                   test_folder = NULL, version = '',
-                                   absTol=NULL, relTol=NULL, r2=NULL,
-                                   gen_schema=FALSE,
-                                   skipCols=c(),
-                                   docIdMapping=c(),
-                                   props=c()){
+                             test_folder = NULL, version = '',
+                             absTol=NULL, relTol=NULL, r2=NULL,
+                             gen_schema=FALSE,
+                             skipCols=c(),
+                             props=c(),
+                             forcejoincol=NULL,
+                             forcejoinrow=NULL){
+  
+  if(!is.null(forcejoincol) && length(forcejoincol) != length(res_table)){
+    stop(paste0("forcejoincol must have the same length as there are output tables(", 
+                length(res_table), ")"))
+  }
+  
+  if(!is.null(forcejoinrow) && length(forcejoinrow) != length(res_table)){
+    stop(paste0("forcejoinrow must have the same length as there are output tables(", 
+                length(res_table), ")"))
+  }
+  
   if( is.null(test_folder)){
     test_folder <- paste0( getwd(), '/tests' )
   }
   
-  in_proj <- create_input_projection(ctx, docIdMapping)
+  in_proj <- create_input_projection(ctx, test_folder)
   
   
   # Check if operator output is a table, list of tables or relation
@@ -48,26 +62,25 @@ build_test_data <- function( res_table, ctx, test_name,
     out_tbl_files <- build_test_data_for_schema( in_proj, res_table, ctx, test_name, 
                                                  test_folder = test_folder, 
                                                  gen_schema=gen_schema,
-                                                 docIdMapping=docIdMapping)
+                                                 forcejoincol,forcejoinrow)
     
   }else if( class(res_table)[[1]] == "list"){
     out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
                                                test_folder = test_folder, 
                                                gen_schema=gen_schema,
-                                               docIdMapping=docIdMapping)  
+                                               forcejoincol,forcejoinrow)  
     
   }else{
     out_tbl_files <- build_test_for_table(in_proj, res_table, ctx, test_name, 
                                           test_folder = test_folder, 
                                           gen_schema=gen_schema,
-                                          docIdMapping=docIdMapping)  
+                                          forcejoincol,forcejoinrow)  
   }
   
   build_test_input( in_proj, out_tbl_files, ctx, test_name, 
                     test_folder = test_folder, version = version,
                     absTol=absTol, relTol=relTol, r2=r2,
                     skipCols=skipCols,
-                    docIdMapping=docIdMapping,
                     props=props)
   
 
@@ -79,12 +92,60 @@ build_test_data <- function( res_table, ctx, test_name,
   save(saved_tbls,file= file.path(test_folder, paste0(test_name, '.Rda')) )
 }
 
+# Checks the presence of documentId columns, and their values
+get_documentId_info <- function( ctx, tbl="main" ){
+  tnames <- ctx$names
+  
+  if(tbl == "col"){
+    tnames <- ctx$cnames  
+  }
+  
+  if(tbl == "row"){
+    tnames <- ctx$rnames  
+  }
+  
+  docIdCheck <- unlist(lapply(tnames, function(x){
+    cn <- str_split(x, "\\.")[[1]]
+    cn <- cn[length(cn)]
+    cn == "documentId"
+  }))
+  
+  has_docId <- any( docIdCheck == TRUE )
+  
+  if( has_docId ){
+    docIdCols <- list()
+    docIdVals <- list()
+    
+    for( dn in names(docIdCheck[which(docIdCheck==TRUE)])  ){
+      docIdCols <- append( docIdCols,dn )
+      if( tbl== "main"){
+        docIdVals <- append( docIdVals, ctx$select(dn, nr=1) )
+      }
+      
+      if( tbl== "col"){
+        docIdVals <- append( docIdVals, ctx$cselect(dn, nr=1) )
+      }
+      
+      if( tbl== "row"){
+        docIdVals <- append( docIdVals, ctx$rselect(dn, nr=1) )
+      }
+    }
+    
+    return(list(TRUE,  docIdCols, docIdVals))
+  }else{
+    return(list(FALSE, list(), list()))
+  }
+}
+
 
 # This function reads in the input projection and return the necessary 
 # variables to be added to the testing files
-create_input_projection <- function( ctx, docIdMapping ){
+create_input_projection <- function( ctx, test_folder ){
   namespace <- ctx$namespace
   proj_names <- ctx$names
+  
+  
+  docIdInfo <- get_documentId_info( ctx, tbl="main" )
   
   # .y, .ci and .ri are always present even if there is nothing set for them
   select_names <- c(".y", ".ci",".ri")
@@ -93,6 +154,7 @@ create_input_projection <- function( ctx, docIdMapping ){
   
   has_y <- TRUE  
   has_x <- FALSE  
+  
   
   # Check whether x axis is set
   if( ".x" %in% proj_names){
@@ -140,7 +202,7 @@ create_input_projection <- function( ctx, docIdMapping ){
   has_lbl_tbl <- FALSE
   
   # .all -> Empty row or column projection table
-  if( length(names(in_rtbl)) > 0 && names(in_rtbl) != ".all" ){
+  if( length(names(in_rtbl)) > 1 || names(in_rtbl) != ".all" ){
     in_rtbl <- in_rtbl %>% 
       mutate( .ri=seq(0,nrow(.)-1) )
     
@@ -152,7 +214,8 @@ create_input_projection <- function( ctx, docIdMapping ){
     in_tbl <- select(in_tbl, -".ri")
   }
   
-  if( length(names(in_ctbl)) > 0 && names(in_ctbl) != ".all" ){
+  
+  if( length(names(in_ctbl)) > 1 || names(in_ctbl) != ".all" ){
     in_ctbl <- in_ctbl %>% mutate( .ci=seq(0,nrow(.)-1) )
     in_tbl <- dplyr::full_join( in_tbl, in_ctbl, by=".ci" ) %>%
       select(-".ci")
@@ -164,25 +227,31 @@ create_input_projection <- function( ctx, docIdMapping ){
   
   if(length(ctx_colors) > 0 && ctx_colors != ""){
     for(i in seq(1,length(ctx_colors))){
-      in_tbl <- cbind(in_tbl, ctx$select(ctx_colors[[i]]) )
+      
+      if( !(ctx_colors[[i]] %in% names(in_tbl))){
+        in_tbl <- cbind(in_tbl, ctx$select(ctx_colors[[i]]) )
+      }
     }
     
     if( any(unlist(lapply(ctx$names, function(x){
-      ".colorLevels" == x
-    })) ) ){
+      ".colorLevels" == x    })) ) ){
+      
       in_tbl <- in_tbl %>% select(-".colorLevels")
     }
   }
   
-  # Find documentId instances and replace them
-  if( length(docIdMapping) > 0 ){
-    for( i in seq(1, length(docIdMapping))  ){
-      in_tbl <- in_tbl %>%
-        mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
+  # Find documentId instances and downloads the files
+  if( docIdInfo[[1]] == TRUE ){
+    docIds <- docIdInfo[[3]]
+    for( docId in docIds ){
+      doc <- ctx$client$fileService$get(docId)
+      
+      test_fname = paste0(test_folder, "/", docId)
+      writeBin(ctx$client$fileService$download(docId), test_fname)
     }
   }
   
-  
+
   return(list(in_tbl=in_tbl, 
               has_col_tbl=has_col_tbl, 
               in_ctbl=in_ctbl, 
@@ -197,8 +266,8 @@ create_input_projection <- function( ctx, docIdMapping ){
 build_test_for_table <- function( in_proj, res_table, ctx, test_name, 
                                   test_folder = NULL, 
                                   gen_schema=FALSE,
-                                  docIdMapping=c()
-){
+                                  forcejoincol=NULL,
+                                  forcejoinrow=NULL){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
@@ -214,30 +283,21 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
   
   if(gen_schema==TRUE){
     build_table_schema(as.data.frame(res_table),
-                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+                             file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
   }
   
-  
-  
+
   tidx <- tidx + 1
-  
-  #res_table
-  
-  if(has_col_tbl == TRUE){
+
+  if(has_col_tbl == TRUE || 
+     (!is.null(forcejoincol) && forcejoincol[1] == TRUE )){
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv')) )
     out_ctbl <- in_ctbl
-    if( length(docIdMapping) > 0 ){
-      # Find documentId instances and replace them
-      for( i in seq(1, length(docIdMapping))  ){
-        out_ctbl <- out_ctbl %>%
-          mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
-      }
-    }
-    
+
     if(gen_schema==TRUE){
       build_table_schema(out_ctbl %>% select(-".ci"),
-                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
     write.csv(out_ctbl %>% select(-".ci"),
@@ -246,28 +306,21 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
     
     tidx <- tidx + 1
   }else{
-    
     if( ".ci" %in% names(res_table) ){
       res_table <- select(res_table, -".ci")
     }
   }
   
-  if(has_row_tbl == TRUE){
+  if(has_row_tbl == TRUE ||
+     (!is.null(forcejoinrow) && forcejoinrow[i] == TRUE )){
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv')) )
     
     out_rtbl <- in_rtbl
-    if( length(docIdMapping) > 0 ){
-      # Find documentId instances and replace them
-      for( i in seq(1, length(docIdMapping))  ){
-        out_rtbl <- out_rtbl %>%
-          mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
-      }
-    }
-    
+
     if(gen_schema==TRUE){
       build_table_schema(out_rtbl %>% select(-".ri"),
-                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
     write.csv(out_rtbl %>% select(-".ri"),
@@ -293,8 +346,8 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
 build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name, 
                                        test_folder = NULL, 
                                        gen_schema=FALSE,
-                                       docIdMapping=c()
-){
+                                       forcejoincol=NULL,
+                                       forcejoinrow=NULL){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
@@ -315,7 +368,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     
     if(gen_schema==TRUE){
       build_table_schema(as.data.frame(res_table),
-                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
     }
     
     
@@ -324,56 +377,54 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     
     tidx <- tidx + 1
     
+
     has_ci <- any(unlist(lapply( names(res_table), function(x) { x == '.ci' } ) ))
     has_ri <- any(unlist(lapply( names(res_table), function(x) { x == '.ri' } ) ))
     
-    if(has_ci == TRUE){
+    if(has_ci == TRUE || 
+       (!is.null(forcejoincol) && forcejoincol[i] == TRUE ) ){
       out_tbl_files <- append( out_tbl_files, 
                                unbox(paste0(test_name, '_out_', tidx, '.csv')) )
       out_ctbl <- in_ctbl
-      if( length(docIdMapping) > 0 ){
-        # Find documentId instances and replace them
-        for( i in seq(1, length(docIdMapping))  ){
-          out_ctbl <- out_ctbl %>%
-            mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
-        }
+      
+      if( ".ci" %in% names(out_ctbl)){
+        out_ctbl <- out_ctbl %>% 
+          select(-".ci")
       }
       
       if(gen_schema==TRUE){
-        build_table_schema(out_ctbl %>% select(-".ci"),
-                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+        build_table_schema(out_ctbl,
+                                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+        
       }
       
-      write.csv(out_ctbl %>% select(-".ci"),
+      write.csv(out_ctbl,
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
                 row.names = FALSE)
       tidx <- tidx + 1
     }else{
-      
       if( ".ci" %in% names(res_table) ){
         res_table <- select(res_table, -".ci")
       }
     }
     
-    if(has_ri == TRUE){
+    if(has_ri == TRUE ||
+       (!is.null(forcejoinrow) && forcejoinrow[i] == TRUE )){
       out_tbl_files <- append( out_tbl_files, 
                                unbox(paste0(test_name, '_out_', tidx, '.csv')) )
       
       out_rtbl <- in_rtbl
-      if( length(docIdMapping) > 0 ){
-        # Find documentId instances and replace them
-        for( i in seq(1, length(docIdMapping))  ){
-          out_rtbl <- out_rtbl %>%
-            mutate_all( ~str_replace(., unlist(names(docIdMapping[i])), unname(docIdMapping[i])) )
-        }
+      if( ".ri" %in% names(out_rtbl)){
+        out_rtbl <- out_rtbl %>% 
+          select(-".ri")
       }
-      
+
       if(gen_schema==TRUE){
-        build_table_schema(out_rtbl %>% select(-".ri"),
-                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+        build_table_schema(out_rtbl,
+                                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
       }
       
-      write.csv(out_rtbl %>% select(-".ri"),
+      write.csv(out_rtbl,
                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
                 row.names = FALSE)
       tidx <- tidx + 1
@@ -397,7 +448,8 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
 build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name, 
                                         test_folder = NULL,
                                         gen_schema=FALSE,
-                                        docIdMapping=c() ){
+                                        forcejoincol=NULL,
+                                        forcejoinrow=NULL ){
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
   in_rtbl <- in_proj$in_rtbl
@@ -419,7 +471,6 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
     
     
     if( is.null(jo_rr$mainRelation)){
-      
       out_tbls <- append( out_tbls, 
                           list(env_to_df( jo_rr$inMemoryTable) ) 
       )
@@ -458,7 +509,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
               row.names = FALSE)
     if(gen_schema==TRUE){
       build_table_schema(as.data.frame(out_tbls[[k]]),
-                         file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
+                               file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
     }
     
   }
@@ -471,7 +522,6 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
                               test_folder = NULL, version = '',
                               absTol=NULL, relTol=NULL, r2=NULL,
                               skipCols=c(),
-                              docIdMapping=c(),
                               props=c()){
   
   in_tbl <- in_proj$in_tbl
@@ -536,9 +586,19 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
     json_data <- c(json_data, "skipColumns"=list(skipColsWithNamespace))
   }
   
+  docIdInfoMain <- get_documentId_info( ctx, tbl="main" )
+  docIdInfoCol <- get_documentId_info( ctx, tbl="col" )
+  docIdInfoRow <- get_documentId_info( ctx, tbl="row" )
   
-  if( length(docIdMapping) > 0 ){
-    fileUris <- unname((docIdMapping))
+  if( docIdInfoMain[[1]] == TRUE ||
+      docIdInfoCol[[1]] == TRUE ||
+      docIdInfoRow[[1]] == TRUE){
+    
+    fileUris <- append( docIdInfoMain[[3]], docIdInfoCol[[3]])
+    fileUris <- append( fileUris, docIdInfoRow[[3]])
+
+    fileUris <- unname(unlist(unique( fileUris)))
+    
     json_data <- c(json_data, "inputFileUris"=list(fileUris))
   }
   
@@ -567,7 +627,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 
 #' Check an operator result against a previously saved run
 #'
-#' Base don a test name, compares a computed table agianst a previously saved one.
+#' Based on a test name, compares a computed table against a previously saved one.
 #' 
 #' @param res_table operator output table with namespace
 #' @param ctx Tercen context
@@ -576,19 +636,33 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' @param relTol Relative tolerance parameter.
 #' @param r2 Squared correlation parameter.
 #' @param skipCols Column names to be skipped during testing
+#' @param forcejoincol Logical array matching num. of out_table to force relation to column (when join was not made through .ci).
+#' @param forcejoinrow Logical array matching num. of out_table to force relation to row (when join was not made through .ri).
 #' @keywords test
 #' @export
 #' @examples
-#' check_test_local(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
+#' run_local_test(tbl, ctx, paste0(step_name, "_absTol"), absTol = 0.001)
 #' 
 #' @import stringr
+#' @import stringi
 #' @import tercen
 #' @import jsonlite
 run_local_test <- function( res_table, ctx, test_name, 
                             test_folder = NULL, 
                             absTol=NULL, relTol=NULL, r2=NULL,
                             skipCols=c(),
-                            docIdMapping=c()){
+                            forcejoincol=NULL,
+                            forcejoinrow=NULL){
+  
+  if(!is.null(forcejoincol) && length(forcejoincol) != length(res_table)){
+    stop(paste0("forcejoincol must have the same length as there are output tables(", 
+                length(res_table), ")"))
+  }
+  
+  if(!is.null(forcejoinrow) && length(forcejoinrow) != length(res_table)){
+    stop(paste0("forcejoinrow must have the same length as there are output tables(", 
+                length(res_table), ")"))
+  }
   
   if( is.null(test_folder)){
     test_folder <- paste0( getwd(), '/tests' )
@@ -599,25 +673,28 @@ run_local_test <- function( res_table, ctx, test_name,
   
   print(paste0("Running local test against ", test_name))
   
-  in_proj <- create_input_projection(ctx, docIdMapping)
+  in_proj <- create_input_projection(ctx, test_folder)
   
   
   # Check if operator output is a table, list of tables or relation
   # Then build the tables as they are in Tercen
   if( class(res_table)[[1]] == "JoinOperator"){
     out_tbl_files <- build_test_data_for_schema( in_proj, res_table, ctx, test_name, 
-                                                 test_folder = tmp_folder, 
-                                                 docIdMapping=docIdMapping)
+                                                       test_folder = tmp_folder, 
+                                                       forcejoincol = forcejoincol,
+                                                       forcejoinrow = forcejoinrow)
     
   }else if( class(res_table)[[1]] == "list"){
     out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
-                                               test_folder = tmp_folder, 
-                                               docIdMapping=docIdMapping)  
+                                                           test_folder = tmp_folder, 
+                                                           forcejoincol = forcejoincol,
+                                                           forcejoinrow = forcejoinrow)  
     
   }else{
     out_tbl_files <- build_test_for_table(in_proj, res_table, ctx, test_name, 
-                                          test_folder = tmp_folder, 
-                                          docIdMapping=docIdMapping)  
+                                                test_folder = tmp_folder, 
+                                                forcejoincol = forcejoincol,
+                                                forcejoinrow = forcejoinrow)  
   }
   
   res_table_list <- list()
