@@ -1,0 +1,58 @@
+name: Build and upload package
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    
+    permissions: write-all
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest,   r: 'release'}
+    
+    env:
+      TERCEN_SERVICE_URI: ${{ secrets.TERCEN_SERVICE_URI }}
+      TERCEN_GITHUB_USER_USERNAME: ${{ secrets.TERCEN_GITHUB_USER_USERNAME }}
+      TERCEN_GITHUB_USER_PASSWORD: ${{ secrets.TERCEN_GITHUB_USER_PASSWORD }}
+      TERCEN_CRAN_TEAM: ${{ secrets.TERCEN_CRAN_TEAM }}
+      TERCEN_CRAN_PROJECT: ${{ secrets.TERCEN_CRAN_PROJECT }}
+      GITHUB_REF_NAME: $GITHUB_REF_NAME
+      
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    
+    - uses: r-lib/actions/setup-r@v2-branch
+      with:
+        r-version: ${{ matrix.config.r }}
+        http-user-agent: ${{ matrix.config.http-user-agent }}
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get install libcurl4-openssl-dev
+        apt-get update && apt-get install -y curl && curl --version
+        curl -v https://sh.rustup.rs --output rustup-init && chmod +x rustup-init && ./rustup-init -y -q
+        
+    - name: Install R packages
+      run: |
+        install.packages('pkgbuild')
+        install.packages('dplyr')
+        install.packages('uuid')
+        install.packages('tercen', repos = c(TERCEN='https://cran.tercen.com/api/v1/rlib/tercen', CRAN='https://cran.tercen.com/api/v1/rlib/CRAN'))
+      shell: Rscript {0}
+      
+    - name: Build and upload package script
+      run: |
+        source("./examples/build-and-upload.R", local = TRUE)
+      shell: Rscript {0}
