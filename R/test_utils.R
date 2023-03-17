@@ -37,22 +37,30 @@ build_test_data <- function( res_table, ctx, test_name,
                              gen_schema=FALSE,
                              skipCols=c(),
                              props=c(),
-                             forcejoincol=NULL,
-                             forcejoinrow=NULL){
+                             join_col_names=NULL,
+                             join_row_names=NULL){
   
-  if(!is.null(forcejoincol) && length(forcejoincol) != length(res_table)){
-    stop(paste0("forcejoincol must have the same length as there are output tables(", 
+  n_out_tables <- length(res_table$rightRelation$joinOperators) + 1
+  if(!is.null(join_col_names) && length(join_col_names) != n_out_tables){
+    stop(paste0("join_col_names must have the same length as there are output tables(", 
                 length(res_table), ")"))
   }
   
-  if(!is.null(forcejoinrow) && length(forcejoinrow) != length(res_table)){
-    stop(paste0("forcejoinrow must have the same length as there are output tables(", 
+  if(!is.null(join_row_names) && length(join_row_names) != n_out_tables){
+    stop(paste0("join_row_names must have the same length as there are output tables(", 
                 length(res_table), ")"))
   }
   
   if( is.null(test_folder)){
     test_folder <- paste0( getwd(), '/tests' )
   }
+  
+  if( dir.exists(test_folder)){
+    unlink(test_folder,recursive = TRUE)
+    
+  }
+  
+  dir.create(test_folder)
   
   in_proj <- create_input_projection(ctx, test_folder)
   
@@ -62,19 +70,19 @@ build_test_data <- function( res_table, ctx, test_name,
     out_tbl_files <- build_test_data_for_schema( in_proj, res_table, ctx, test_name, 
                                                  test_folder = test_folder, 
                                                  gen_schema=gen_schema,
-                                                 forcejoincol,forcejoinrow)
+                                                 join_col_names,join_row_names)
     
   }else if( class(res_table)[[1]] == "list"){
     out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
                                                test_folder = test_folder, 
                                                gen_schema=gen_schema,
-                                               forcejoincol,forcejoinrow)  
+                                               join_col_names,join_row_names)  
     
   }else{
     out_tbl_files <- build_test_for_table(in_proj, res_table, ctx, test_name, 
                                           test_folder = test_folder, 
                                           gen_schema=gen_schema,
-                                          forcejoincol,forcejoinrow)  
+                                          join_col_names,join_row_names)  
   }
   
   build_test_input( in_proj, out_tbl_files, ctx, test_name, 
@@ -83,7 +91,7 @@ build_test_data <- function( res_table, ctx, test_name,
                     skipCols=skipCols,
                     props=props)
   
-
+  
   # Save output tables for running the tests locally when needed
   saved_tbls <- list()
   for( tbl_file in out_tbl_files){
@@ -251,7 +259,7 @@ create_input_projection <- function( ctx, test_folder ){
     }
   }
   
-
+  
   return(list(in_tbl=in_tbl, 
               has_col_tbl=has_col_tbl, 
               in_ctbl=in_ctbl, 
@@ -266,8 +274,8 @@ create_input_projection <- function( ctx, test_folder ){
 build_test_for_table <- function( in_proj, res_table, ctx, test_name, 
                                   test_folder = NULL, 
                                   gen_schema=FALSE,
-                                  forcejoincol=NULL,
-                                  forcejoinrow=NULL){
+                                  join_col_names=NULL,
+                                  join_row_names=NULL){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
@@ -283,21 +291,21 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
   
   if(gen_schema==TRUE){
     build_table_schema(as.data.frame(res_table),
-                             file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+                       file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
   }
   
-
+  
   tidx <- tidx + 1
-
+  
   if(has_col_tbl == TRUE || 
-     (!is.null(forcejoincol) && forcejoincol[1] == TRUE )){
+     (!is.null(join_col_names) && join_col_names[1] == TRUE )){
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv')) )
     out_ctbl <- in_ctbl
-
+    
     if(gen_schema==TRUE){
       build_table_schema(out_ctbl %>% select(-".ci"),
-                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
     write.csv(out_ctbl %>% select(-".ci"),
@@ -312,15 +320,15 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
   }
   
   if(has_row_tbl == TRUE ||
-     (!is.null(forcejoinrow) && forcejoinrow[i] == TRUE )){
+     (!is.null(join_row_names) && join_row_names[i] == TRUE )){
     out_tbl_files <- append( out_tbl_files, 
                              unbox(paste0(test_name, '_out_', tidx, '.csv')) )
     
     out_rtbl <- in_rtbl
-
+    
     if(gen_schema==TRUE){
       build_table_schema(out_rtbl %>% select(-".ri"),
-                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
     write.csv(out_rtbl %>% select(-".ri"),
@@ -346,8 +354,8 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
 build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name, 
                                        test_folder = NULL, 
                                        gen_schema=FALSE,
-                                       forcejoincol=NULL,
-                                       forcejoinrow=NULL){
+                                       join_col_names=NULL,
+                                       join_row_names=NULL){
   in_tbl <- in_proj$in_tbl
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
@@ -368,7 +376,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     
     if(gen_schema==TRUE){
       build_table_schema(as.data.frame(res_table),
-                               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
+                         file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ))
     }
     
     
@@ -377,12 +385,12 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     
     tidx <- tidx + 1
     
-
+    
     has_ci <- any(unlist(lapply( names(res_table), function(x) { x == '.ci' } ) ))
     has_ri <- any(unlist(lapply( names(res_table), function(x) { x == '.ri' } ) ))
     
     if(has_ci == TRUE || 
-       (!is.null(forcejoincol) && forcejoincol[i] == TRUE ) ){
+       (!is.null(join_col_names) && join_col_names[i] == TRUE ) ){
       out_tbl_files <- append( out_tbl_files, 
                                unbox(paste0(test_name, '_out_', tidx, '.csv')) )
       out_ctbl <- in_ctbl
@@ -394,7 +402,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
       
       if(gen_schema==TRUE){
         build_table_schema(out_ctbl,
-                                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
         
       }
       
@@ -409,7 +417,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     }
     
     if(has_ri == TRUE ||
-       (!is.null(forcejoinrow) && forcejoinrow[i] == TRUE )){
+       (!is.null(join_row_names) && join_row_names[i] == TRUE )){
       out_tbl_files <- append( out_tbl_files, 
                                unbox(paste0(test_name, '_out_', tidx, '.csv')) )
       
@@ -418,10 +426,10 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
         out_rtbl <- out_rtbl %>% 
           select(-".ri")
       }
-
+      
       if(gen_schema==TRUE){
         build_table_schema(out_rtbl,
-                                 file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
+                           file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
       }
       
       write.csv(out_rtbl,
@@ -448,8 +456,8 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
 build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name, 
                                         test_folder = NULL,
                                         gen_schema=FALSE,
-                                        forcejoincol=NULL,
-                                        forcejoinrow=NULL ){
+                                        join_col_names=NULL,
+                                        join_row_names=NULL ){
   in_ctbl <- in_proj$in_ctbl
   has_col_tbl <- in_proj$has_col_tbl
   in_rtbl <- in_proj$in_rtbl
@@ -469,11 +477,33 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
   for( k in seq(1, length(jo))){
     jo_rr <- jo[[k]]$rightRelation
     
-    
-    if( is.null(jo_rr$mainRelation)){
-      out_tbls <- append( out_tbls, 
-                          list(env_to_df( jo_rr$inMemoryTable) ) 
-      )
+    if(class(jo_rr)[1] == "InMemoryRelation"){
+      out_tbls <- append(out_tbls,
+                         list(env_to_df(jo_rr$inMemoryTable)))
+    }else if( is.null(jo_rr$mainRelation)){
+      lp <- jo[[k]]$leftPair
+      
+      if(length(lp$lColumns) > 0){
+        lcols <- unlist(lp$lColumns)
+        rcols <- unlist(lp$rColumns)
+        
+        for( c in seq(1, length(lcols))){
+          if( (is.null(join_col_names) && lcols[c] == ".ci") || (lcols[c] %in% join_col_names[k])){
+            out_tbls <- append( out_tbls, list(select(in_ctbl, -".ci")) )
+          }
+          
+          if( (is.null(join_row_names) && lcols[c] == ".ri") || (lcols[c] %in% join_row_names[k])){
+            out_tbls <- append( out_tbls, list(select(in_rtbl, -".ri")) )
+          }
+        }
+      }else{
+        next
+      }
+      
+      
+    }else if( !is.null(jo_rr$mainRelation)){
+      out_tbls <- append(out_tbls,
+                         list(env_to_df(jo_rr$inMemoryTable)))
     }else{
       out_tbls <- append( out_tbls, 
                           list(env_to_df( jo_rr$mainRelation$inMemoryTable ) ) 
@@ -509,7 +539,7 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
               row.names = FALSE)
     if(gen_schema==TRUE){
       build_table_schema(as.data.frame(out_tbls[[k]]),
-                               file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
+                         file.path(test_folder, paste0(test_name, '_out_', k ,'.csv') ))
     }
     
   }
@@ -596,7 +626,7 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
     
     fileUris <- append( docIdInfoMain[[3]], docIdInfoCol[[3]])
     fileUris <- append( fileUris, docIdInfoRow[[3]])
-
+    
     fileUris <- unname(unlist(unique( fileUris)))
     
     json_data <- c(json_data, "inputFileUris"=list(fileUris))
@@ -636,8 +666,8 @@ build_test_input <- function( in_proj, out_tbl_files, ctx, test_name,
 #' @param relTol Relative tolerance parameter.
 #' @param r2 Squared correlation parameter.
 #' @param skipCols Column names to be skipped during testing
-#' @param forcejoincol Logical array matching num. of out_table to force relation to column (when join was not made through .ci).
-#' @param forcejoinrow Logical array matching num. of out_table to force relation to row (when join was not made through .ri).
+#' @param join_col_names Logical array matching num. of out_table to force relation to column (when join was not made through .ci).
+#' @param join_row_names Logical array matching num. of out_table to force relation to row (when join was not made through .ri).
 #' @keywords test
 #' @export
 #' @examples
@@ -651,16 +681,16 @@ run_local_test <- function( res_table, ctx, test_name,
                             test_folder = NULL, 
                             absTol=NULL, relTol=NULL, r2=NULL,
                             skipCols=c(),
-                            forcejoincol=NULL,
-                            forcejoinrow=NULL){
+                            join_col_names=NULL,
+                            join_row_names=NULL){
   
-  if(!is.null(forcejoincol) && length(forcejoincol) != length(res_table)){
-    stop(paste0("forcejoincol must have the same length as there are output tables(", 
+  if(!is.null(join_col_names) && length(join_col_names) != length(res_table)){
+    stop(paste0("join_col_names must have the same length as there are output tables(", 
                 length(res_table), ")"))
   }
   
-  if(!is.null(forcejoinrow) && length(forcejoinrow) != length(res_table)){
-    stop(paste0("forcejoinrow must have the same length as there are output tables(", 
+  if(!is.null(join_row_names) && length(join_row_names) != length(res_table)){
+    stop(paste0("join_row_names must have the same length as there are output tables(", 
                 length(res_table), ")"))
   }
   
@@ -680,21 +710,21 @@ run_local_test <- function( res_table, ctx, test_name,
   # Then build the tables as they are in Tercen
   if( class(res_table)[[1]] == "JoinOperator"){
     out_tbl_files <- build_test_data_for_schema( in_proj, res_table, ctx, test_name, 
-                                                       test_folder = tmp_folder, 
-                                                       forcejoincol = forcejoincol,
-                                                       forcejoinrow = forcejoinrow)
+                                                 test_folder = tmp_folder, 
+                                                 join_col_names = join_col_names,
+                                                 join_row_names = join_row_names)
     
   }else if( class(res_table)[[1]] == "list"){
     out_tbl_files <- build_test_for_table_list(in_proj, res_table, ctx, test_name, 
-                                                           test_folder = tmp_folder, 
-                                                           forcejoincol = forcejoincol,
-                                                           forcejoinrow = forcejoinrow)  
+                                               test_folder = tmp_folder, 
+                                               join_col_names = join_col_names,
+                                               join_row_names = join_row_names)  
     
   }else{
     out_tbl_files <- build_test_for_table(in_proj, res_table, ctx, test_name, 
-                                                test_folder = tmp_folder, 
-                                                forcejoincol = forcejoincol,
-                                                forcejoinrow = forcejoinrow)  
+                                          test_folder = tmp_folder, 
+                                          join_col_names = join_col_names,
+                                          join_row_names = join_row_names)  
   }
   
   res_table_list <- list()
@@ -852,7 +882,6 @@ build_table_schema <- function(  tbl, tbl_file ){
   table_schema <- c()
   
   for( i in seq(1, length(colnames))) {
-    
     entry <- list("kind"=unbox("ColumnSchema"),
                   "name"=unbox(colnames[[i]]),
                   "type"=unbox(get_column_type(class(tbl[[colnames[[i]]]]))) )
