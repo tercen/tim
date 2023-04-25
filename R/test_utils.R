@@ -215,22 +215,22 @@ create_input_projection <- function( ctx, test_folder ){
       mutate( .ri=seq(0,nrow(.)-1) )
     
     in_tbl <- dplyr::full_join( in_tbl, in_rtbl, by=".ri" ) %>%
-      select(-".ri") 
+      dplyr::select(-".ri") 
     
     has_row_tbl <- TRUE
   }else{
-    in_tbl <- select(in_tbl, -".ri")
+    in_tbl <- dplyr::select(in_tbl, -".ri")
   }
   
   
   if( length(names(in_ctbl)) > 1 || names(in_ctbl) != ".all" ){
     in_ctbl <- in_ctbl %>% mutate( .ci=seq(0,nrow(.)-1) )
     in_tbl <- dplyr::full_join( in_tbl, in_ctbl, by=".ci" ) %>%
-      select(-".ci")
+      dplyr::select(-".ci")
     
     has_col_tbl <- TRUE
   }else{
-    in_tbl <- select(in_tbl, -".ci")
+    in_tbl <- dplyr::select(in_tbl, -".ci")
   }
   
   if(length(ctx_colors) > 0 && ctx_colors != ""){
@@ -244,7 +244,7 @@ create_input_projection <- function( ctx, test_folder ){
     if( any(unlist(lapply(ctx$names, function(x){
       ".colorLevels" == x    })) ) ){
       
-      in_tbl <- in_tbl %>% select(-".colorLevels")
+      in_tbl <- in_tbl %>% dplyr::select(-".colorLevels")
     }
   }
   
