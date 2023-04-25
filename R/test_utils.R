@@ -304,18 +304,18 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
     out_ctbl <- in_ctbl
     
     if(gen_schema==TRUE){
-      build_table_schema(out_ctbl %>% select(-".ci"),
+      build_table_schema(out_ctbl %>% dplyr::select(-".ci"),
                          file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
-    write.csv(out_ctbl %>% select(-".ci"),
+    write.csv(out_ctbl %>% dplyr::select(-".ci"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
               row.names = FALSE)
     
     tidx <- tidx + 1
   }else{
     if( ".ci" %in% names(res_table) ){
-      res_table <- select(res_table, -".ci")
+      res_table <- dplyr::select(res_table, -".ci")
     }
   }
   
@@ -327,18 +327,18 @@ build_test_for_table <- function( in_proj, res_table, ctx, test_name,
     out_rtbl <- in_rtbl
     
     if(gen_schema==TRUE){
-      build_table_schema(out_rtbl %>% select(-".ri"),
+      build_table_schema(out_rtbl %>% dplyr::select(-".ri"),
                          file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) )
     }
     
-    write.csv(out_rtbl %>% select(-".ri"),
+    write.csv(out_rtbl %>% dplyr::select(-".ri"),
               file.path(test_folder, paste0(test_name, '_out_', tidx, '.csv') ) ,
               row.names = FALSE)
     
   }else{
     
     if( ".ri" %in% names(res_table) ){
-      res_table <- select(res_table, -".ri")
+      res_table <- dplyr::select(res_table, -".ri")
     }
   }
   
@@ -397,7 +397,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
       
       if( ".ci" %in% names(out_ctbl)){
         out_ctbl <- out_ctbl %>% 
-          select(-".ci")
+          dplyr::select(-".ci")
       }
       
       if(gen_schema==TRUE){
@@ -412,7 +412,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
       tidx <- tidx + 1
     }else{
       if( ".ci" %in% names(res_table) ){
-        res_table <- select(res_table, -".ci")
+        res_table <- dplyr::select(res_table, -".ci")
       }
     }
     
@@ -424,7 +424,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
       out_rtbl <- in_rtbl
       if( ".ri" %in% names(out_rtbl)){
         out_rtbl <- out_rtbl %>% 
-          select(-".ri")
+          dplyr::select(-".ri")
       }
       
       if(gen_schema==TRUE){
@@ -439,7 +439,7 @@ build_test_for_table_list <- function( in_proj, res_table_list, ctx, test_name,
     }else{
       
       if( ".ri" %in% names(res_table) ){
-        res_table <- select(res_table, -".ri")
+        res_table <- dplyr::select(res_table, -".ri")
       }
     }
     
@@ -489,11 +489,11 @@ build_test_data_for_schema <- function( in_proj, res_table, ctx, test_name,
         
         for( c in seq(1, length(lcols))){
           if( (is.null(join_col_names) && lcols[c] == ".ci") || (lcols[c] %in% join_col_names[k])){
-            out_tbls <- append( out_tbls, list(select(in_ctbl, -".ci")) )
+            out_tbls <- append( out_tbls, list(dplyr::select(in_ctbl, -".ci")) )
           }
           
           if( (is.null(join_row_names) && lcols[c] == ".ri") || (lcols[c] %in% join_row_names[k])){
-            out_tbls <- append( out_tbls, list(select(in_rtbl, -".ri")) )
+            out_tbls <- append( out_tbls, list(dplyr::select(in_rtbl, -".ri")) )
           }
         }
       }else{
